@@ -1,8 +1,7 @@
-import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { api } from "@/utils/api";
-import { formatDateToString } from "@/utils/formatDate";
+import { AuthShowcase, GetAllShowcase } from "@/features/showcases";
 
 export default function Home() {
   const hello = api.example.hello.useQuery({ text: "from tRPC" });
@@ -53,71 +52,5 @@ export default function Home() {
         </div>
       </main>
     </>
-  );
-}
-
-/**
- * Example of how to use our tRPC API to query the PlanetScale DB for a table of items
- * @constructor
- */
-function GetAllShowcase() {
-  const getAll = api.example.getAll.useQuery();
-  return (
-    <p className="rounded text-2xl text-white shadow-sm shadow-white">
-      <span className={`m-4 font-bold`}>Items created in prisma studio:</span>
-      {getAll.data
-        ? getAll.data.map(({ id, createdAt, updatedAt }, index) => (
-            <span
-              key={id}
-              className={`flex flex-row justify-center gap-x-8 gap-y-2 border-t`}
-            >
-              <span>
-                <span className={`font-bold`}>{index}:</span>
-              </span>
-              <span>
-                <span className={`font-bold`}>id:</span> {id}
-              </span>
-              <span>
-                <span className={`font-bold`}>createdAt:</span>{" "}
-                {formatDateToString(createdAt)}
-              </span>
-              <span>
-                <span className={`font-bold`}>updatedAt:</span>{" "}
-                {formatDateToString(updatedAt)}
-              </span>
-            </span>
-          ))
-        : "Loading tRPC query..."}
-    </p>
-  );
-}
-
-/**
- *
- * Example of how to determine if a user has been authenticated.
- * If they have, use our tRPC API to query the PlanetScale DB for the user's data
- * @constructor
- */
-function AuthShowcase() {
-  const { data: sessionData } = useSession();
-
-  const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-    undefined, // no input
-    { enabled: sessionData?.user !== undefined }
-  );
-
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-        {secretMessage && <span> - {secretMessage}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
   );
 }

@@ -21,6 +21,16 @@ model Example {
   updatedAt DateTime @updatedAt
 }
 
+model Post {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  content   String @db.VarChar(255)
+  creatorId String
+
+  @@index([creatorId])
+}
+
 // Necessary for Next auth
 model Account {
   id                String  @id @default(cuid())
