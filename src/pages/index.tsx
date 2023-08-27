@@ -7,6 +7,7 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { LoadingPage, LoadingSpinner } from "@/components";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 dayjs.extend(relativeTime);
 
@@ -115,6 +116,20 @@ const CreatePostWizard = () => {
       setContent("");
       void ctx.posts.getAll.invalidate(); // add 'void' to tell ts we don't care what happens with 'invalidate'
     },
+    onError: (error) => {
+      // show a toast message checking for errors in this order:
+      //  - zod errors
+      //  - tRPC errors
+      //  - catch all
+      const errorMessage = error.data?.zodError?.fieldErrors.content;
+      toast.error(
+        errorMessage
+          ? errorMessage.join(", ")
+          : error.message
+          ? error.message
+          : "Failed to post. Please try again later!"
+      );
+    },
   });
 
   if (!sessionData) return null;
@@ -137,21 +152,31 @@ const CreatePostWizard = () => {
           alt={"your profile image"}
         />
       )}
-      <div className={`flex grow`}>
+      <div className={`flex grow items-center`}>
         <input
-          className="disabled:bg-stone/40 grow rounded-l bg-white/10 p-2 disabled:animate-pulse disabled:rounded"
+          className="disabled:bg-stone/40 grow rounded-l bg-white/10 p-2 disabled:mr-2 disabled:animate-pulse disabled:rounded"
           placeholder="If you have something nice to say..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
           disabled={isPosting}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              if (content !== "") {
+                mutate({ content });
+              }
+            }
+          }}
         />
-        <button
-          onClick={createPost}
-          className={`disabled:bg-stone/40 rounded-r bg-white/10 px-3 py-2 font-semibold text-white no-underline transition hover:bg-white/20 disabled:hidden`}
-          disabled={isPosting}
-        >
-          Post
-        </button>
+        {!isPosting && (
+          <button
+            onClick={createPost}
+            className={`rounded-r bg-white/10 px-3 py-2 font-semibold text-white no-underline transition hover:bg-white/20`}
+          >
+            Post
+          </button>
+        )}
+        {isPosting && <LoadingSpinner size={20} />}
       </div>
     </div>
   );

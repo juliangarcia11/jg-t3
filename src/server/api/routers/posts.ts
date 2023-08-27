@@ -62,7 +62,11 @@ export const postsRouter = createTRPCRouter({
   }),
 
   create: protectedProcedure
-    .input(z.object({ content: z.string().min(1).max(255) }))
+    .input(
+      z.object({
+        content: z.string().min(1, "Posts must have content!").max(255),
+      })
+    )
     .mutation(async ({ ctx, input }) => {
       const creatorId = ctx.session.user.id;
 
