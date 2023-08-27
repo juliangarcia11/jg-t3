@@ -14,7 +14,7 @@ export default function PostPage() {
   return (
     <>
       <Head>
-        <title>JG-T3</title>
+        <title>Post</title>
         <meta name="description" content="Exploring the t3 stack" />
         <link rel="icon" href="/favicon.ico" />
       </Head>

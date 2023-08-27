@@ -1,4 +1,3 @@
-import Head from "next/head";
 import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
@@ -22,11 +21,6 @@ export default function Home() {
 
   return (
     <>
-      <Head>
-        <title>JG-T3</title>
-        <meta name="description" content="Exploring the t3 stack" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
       <main className="flex h-screen justify-center">
         <div className="w-full border-x border-x-stone-400 md:max-w-2xl">
           {/* header toolbar */}

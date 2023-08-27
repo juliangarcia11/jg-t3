@@ -3,6 +3,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
+import { filterUserForClient } from "@/server/helpers";
 import type { User } from "next-auth";
 import type { Post } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
@@ -10,7 +11,6 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-// Create a new ratelimiter, that allows 3 requests per 1 minute
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(3, "1 m"),
@@ -21,12 +21,6 @@ const ratelimit = new Ratelimit({
    * "@upstash/ratelimit"
    */
   prefix: "@upstash/ratelimit",
-});
-
-const filterUserForClient = ({ id, name, image }: User) => ({
-  id,
-  name,
-  image,
 });
 
 const mapPostUser = (post: Post, users: User[]) => {
