@@ -3,18 +3,19 @@ import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
-import { formatDateToString } from "@/utils/formatDate";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+import { LoadingPage, LoadingSpinner } from "@/components";
+
+dayjs.extend(relativeTime);
 
 export default function Home() {
-  const { data: sessionData } = useSession();
-  const { data, isLoading, isError } = api.posts.getAll.useQuery();
+  const { status } = useSession();
 
-  if (isLoading || isError)
-    return (
-      <main className="flex h-screen w-screen content-center justify-center">
-        {isLoading ? "Loading..." : "Something went wrong :("}
-      </main>
-    );
+  // start the fetch for posts ASAP, the <Feed/> will use the cached api response
+  api.posts.getAll.useQuery();
+
+  if (status === "loading") return <LoadingPage />;
 
   return (
     <>
@@ -29,36 +30,51 @@ export default function Home() {
           <div className="flex w-full border-b border-b-stone-400 p-4">
             <div className="flex w-full items-center gap-4">
               <CreatePostWizard />
-              <AuthButton hasSessionData={!!sessionData} />
+              <AuthButton hasSessionData={status === "authenticated"} />
             </div>
           </div>
-
-          {/* posts */}
-          <div className="flex flex-col">
-            {!data.length && <div className="mx-auto p-8">No Posts!</div>}
-            {data?.map((post: PostWithUser) => (
-              <PostView key={post.id} {...post} />
-            ))}
-          </div>
+          <Feed />
         </div>
       </main>
     </>
   );
 }
 
+const Feed = () => {
+  const { data, isLoading, isError } = api.posts.getAll.useQuery();
+
+  if (isLoading)
+    return (
+      <div className={`m-8 flex justify-center`}>
+        <LoadingSpinner />
+      </div>
+    );
+
+  if (isError) return <div>{"Something went wrong :("}</div>;
+
+  return (
+    <div className="flex flex-col">
+      {!data.length && <div className="mx-auto p-8">No Posts!</div>}
+      {data?.map((post: PostWithUser) => (
+        <PostView key={post.id} {...post} />
+      ))}
+    </div>
+  );
+};
+
 type PostWithUser = RouterOutputs["posts"]["getAll"][number];
 const PostView = ({ id, content, creator, createdAt }: PostWithUser) => (
   <div
     key={id}
-    className="flex flex-row items-center gap-3 border-b border-b-stone-400 px-6 py-8"
+    className="flex flex-row items-center gap-4 border-b border-b-stone-400 px-4 py-8"
   >
     {creator.image && (
       <Image
-        className="h-6 w-6 rounded-full"
+        className="h-10 w-10 rounded-full"
         width={100}
         height={100}
         src={creator.image}
-        alt={"profile image"}
+        alt={`@${creator.name}'s profile image`}
       />
     )}
     {!creator.image && <span className="h-6 w-6 rounded-full">👽</span>}
@@ -67,7 +83,7 @@ const PostView = ({ id, content, creator, createdAt }: PostWithUser) => (
         <span className={`font-bold`}>{`@${creator.name}`}</span>
         {" • "}
         <span className={`text-xs font-thin`}>
-          {formatDateToString(new Date(createdAt))}
+          {dayjs(createdAt).fromNow()}
         </span>
       </div>
       <span className={`ml-2`}>{content}</span>
@@ -105,7 +121,7 @@ const CreatePostWizard = () => {
           width={100}
           height={100}
           src={sessionData.user.image}
-          alt={"profile image"}
+          alt={"your profile image"}
         />
       )}
       <input
