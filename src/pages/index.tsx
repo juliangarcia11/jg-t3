@@ -2,6 +2,7 @@ import { signIn, signOut, useSession } from "next-auth/react";
 import Head from "next/head";
 import Link from "next/link";
 import { api } from "@/utils/api";
+import { formatDateToString } from "@/utils/formatDate";
 
 export default function Home() {
   const hello = api.example.hello.useQuery({ text: "from tRPC" });
@@ -46,6 +47,7 @@ export default function Home() {
             <p className="text-2xl text-white">
               {hello.data ? hello.data.greeting : "Loading tRPC query..."}
             </p>
+            <GetAllShowcase />
             <AuthShowcase />
           </div>
         </div>
@@ -54,6 +56,48 @@ export default function Home() {
   );
 }
 
+/**
+ * Example of how to use our tRPC API to query the PlanetScale DB for a table of items
+ * @constructor
+ */
+function GetAllShowcase() {
+  const getAll = api.example.getAll.useQuery();
+  return (
+    <p className="rounded text-2xl text-white shadow-sm shadow-white">
+      <span className={`m-4 font-bold`}>Items created in prisma studio:</span>
+      {getAll.data
+        ? getAll.data.map(({ id, createdAt, updatedAt }, index) => (
+            <span
+              key={id}
+              className={`flex flex-row justify-center gap-x-8 gap-y-2 border-t`}
+            >
+              <span>
+                <span className={`font-bold`}>{index}:</span>
+              </span>
+              <span>
+                <span className={`font-bold`}>id:</span> {id}
+              </span>
+              <span>
+                <span className={`font-bold`}>createdAt:</span>{" "}
+                {formatDateToString(createdAt)}
+              </span>
+              <span>
+                <span className={`font-bold`}>updatedAt:</span>{" "}
+                {formatDateToString(updatedAt)}
+              </span>
+            </span>
+          ))
+        : "Loading tRPC query..."}
+    </p>
+  );
+}
+
+/**
+ *
+ * Example of how to determine if a user has been authenticated.
+ * If they have, use our tRPC API to query the PlanetScale DB for the user's data
+ * @constructor
+ */
 function AuthShowcase() {
   const { data: sessionData } = useSession();
 
