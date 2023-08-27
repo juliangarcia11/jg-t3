@@ -6,6 +6,7 @@ import Image from "next/image";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { LoadingPage, LoadingSpinner } from "@/components";
+import { useState } from "react";
 
 dayjs.extend(relativeTime);
 
@@ -86,7 +87,7 @@ const PostView = ({ id, content, creator, createdAt }: PostWithUser) => (
           {dayjs(createdAt).fromNow()}
         </span>
       </div>
-      <span className={`ml-2`}>{content}</span>
+      <span className={`ml-2 text-xl`}>{content}</span>
     </div>
   </div>
 );
@@ -107,8 +108,20 @@ const AuthButton = ({ hasSessionData }: { hasSessionData: boolean }) => (
 
 const CreatePostWizard = () => {
   const { data: sessionData } = useSession();
+  const ctx = api.useContext();
+  const [content, setContent] = useState("");
+  const { mutate, isLoading: isPosting } = api.posts.create.useMutation({
+    onSuccess: () => {
+      setContent("");
+      void ctx.posts.getAll.invalidate(); // add 'void' to tell ts we don't care what happens with 'invalidate'
+    },
+  });
 
   if (!sessionData) return null;
+
+  const createPost = () => {
+    mutate({ content });
+  };
 
   return (
     <div className="flex grow gap-4">
@@ -124,10 +137,22 @@ const CreatePostWizard = () => {
           alt={"your profile image"}
         />
       )}
-      <input
-        className="grow rounded rounded-r-none bg-white/10 p-2"
-        placeholder="If you have something nice to say..."
-      />
+      <div className={`flex grow`}>
+        <input
+          className="disabled:bg-stone/40 grow rounded-l bg-white/10 p-2 disabled:animate-pulse disabled:rounded"
+          placeholder="If you have something nice to say..."
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          disabled={isPosting}
+        />
+        <button
+          onClick={createPost}
+          className={`disabled:bg-stone/40 rounded-r bg-white/10 px-3 py-2 font-semibold text-white no-underline transition hover:bg-white/20 disabled:hidden`}
+          disabled={isPosting}
+        >
+          Post
+        </button>
+      </div>
     </div>
   );
 };
