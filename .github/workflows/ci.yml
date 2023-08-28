@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  DATABASE_URL: "https://fake.com"
+  NEXTAUTH_SECRET: "https://fake.com"
+  NEXTAUTH_URL: "https://fake.com"
+  DISCORD_CLIENT_ID: "https://fake.com"
+  DISCORD_CLIENT_SECRET: "https://fake.com"
+  GITHUB_ID: "https://fake.com"
+  GITHUB_SECRET: "https://fake.com"
+  GOOGLE_ID: "https://fake.com"
+  GOOGLE_SECRET: "https://fake.com"
+  UPSTASH_REDIS_REST_URL: "https://fake.com"
+  UPSTASH_REDIS_REST_TOKEN: "https://fake.com"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript typechecking
+        run: npm run typecheck
+
+      - name: Run lint
+        run: npm run lint

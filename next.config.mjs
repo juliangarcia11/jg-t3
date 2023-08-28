@@ -27,7 +27,20 @@ const config = {
         pathname: '/**',
       },
     ]
-  }
+  },
+
+  // git will handle this
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
+  // git will handle this
+  eslint: {
+    ignoreDuringBuilds: true
+  },
+
+  // try using swc instead of babel
+  swcMinify: true
 };
 
 export default config;
