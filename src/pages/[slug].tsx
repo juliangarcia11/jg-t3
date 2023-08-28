@@ -2,18 +2,15 @@ import Head from "next/head";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { api } from "@/utils/api";
-import { appRouter } from "@/server/api/root";
-import superjson from "superjson";
-import { createServerSideHelpers } from "@trpc/react-query/server";
 import type {
   GetStaticPaths,
   GetStaticPropsContext,
   InferGetStaticPropsType,
   NextPage,
 } from "next";
-import { prisma } from "@/server/db";
 import { LoadingSpinner, PageLayout, PostView } from "@/components";
 import Image from "next/image";
+import { generateSSGHelper } from "@/server/helpers";
 
 dayjs.extend(relativeTime);
 
@@ -22,11 +19,7 @@ export async function getStaticProps(
     slug: string;
   }>
 ) {
-  const helpers = createServerSideHelpers({
-    router: appRouter,
-    ctx: { prisma, session: null },
-    transformer: superjson,
-  });
+  const ssg = generateSSGHelper();
   const slug = context.params?.slug;
 
   if (!slug) throw new Error("Missing slug");
@@ -35,11 +28,11 @@ export async function getStaticProps(
    * Prefetching the `user.getByName` query.
    * `prefetch` does not return the result and never throws - if you need that behavior, use `fetch` instead.
    */
-  await helpers.users.getByName.prefetch({ name });
+  await ssg.users.getByName.prefetch({ name });
   // Make sure to return { props: { trpcState: helpers.dehydrate() } }
   return {
     props: {
-      trpcState: helpers.dehydrate(),
+      trpcState: ssg.dehydrate(),
       name,
     },
   };
