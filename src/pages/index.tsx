@@ -1,10 +1,10 @@
-import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
+import { api } from "@/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { LoadingPage, LoadingSpinner } from "@/components";
+import { PageLayout, LoadingSpinner, SiteLogo } from "@/components";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -17,23 +17,17 @@ export default function Home() {
   // start the fetch for posts ASAP, the <Feed/> will use the cached api response
   api.posts.getAll.useQuery();
 
-  if (status === "loading") return <LoadingPage />;
-
   return (
-    <>
-      <main className="flex h-screen justify-center">
-        <div className="w-full border-x border-x-stone-400 md:max-w-2xl">
-          {/* header toolbar */}
-          <div className="flex w-full border-b border-b-stone-400 p-4">
-            <div className="flex w-full items-center gap-4">
-              <CreatePostWizard />
-              <AuthButton hasSessionData={status === "authenticated"} />
-            </div>
-          </div>
-          <Feed />
+    <PageLayout isLoading={status === "loading"}>
+      {/* header toolbar */}
+      <div className="flex w-full border-b border-b-stone-400 p-4">
+        <div className="flex w-full items-center gap-4">
+          <CreatePostWizard />
+          <AuthButton hasSessionData={status === "authenticated"} />
         </div>
-      </main>
-    </>
+      </div>
+      <Feed />
+    </PageLayout>
   );
 }
 
@@ -139,9 +133,7 @@ const CreatePostWizard = () => {
 
   return (
     <div className="flex grow gap-4">
-      {!sessionData.user.image && (
-        <h1 className="ml-2 text-2xl font-extrabold italic">jg-t3</h1>
-      )}
+      {!sessionData.user.image && <SiteLogo />}
       {sessionData.user.image && (
         <Image
           className="h-10 w-10 rounded-full"

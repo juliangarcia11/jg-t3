@@ -1,7 +1,6 @@
 import Head from "next/head";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { LoadingPage } from "@/components";
 import { api } from "@/utils/api";
 import { appRouter } from "@/server/api/root";
 import superjson from "superjson";
@@ -13,6 +12,8 @@ import type {
   NextPage,
 } from "next";
 import { prisma } from "@/server/db";
+import { PageLayout } from "@/components";
+import Image from "next/image";
 
 dayjs.extend(relativeTime);
 
@@ -54,10 +55,8 @@ export const getStaticPaths: GetStaticPaths = () => {
 
 type PageProps = InferGetStaticPropsType<typeof getStaticProps>;
 const ProfilePage: NextPage<PageProps> = ({ name }: PageProps) => {
-  const { data, isLoading, isError } = api.users.getByName.useQuery({ name });
+  const { data } = api.users.getByName.useQuery({ name });
 
-  if (isLoading) return <LoadingPage />;
-  if (isError) return "Something went wrong";
   if (!data) return "Profile not found";
 
   return (
@@ -67,7 +66,22 @@ const ProfilePage: NextPage<PageProps> = ({ name }: PageProps) => {
         <meta name="description" content="Exploring the t3 stack" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className="flex h-screen justify-center">{`Profile View: @${data.name}`}</main>
+      <PageLayout>
+        <div className="relative h-36 bg-stone-200/20 font-semibold italic">
+          <Image
+            src={data.image!}
+            alt={`@${data.name}'s profile image`}
+            className="absolute bottom-0 left-0 -mb-16 ml-4 rounded-full border-4 border-black/70 bg-black"
+            width={128}
+            height={128}
+          />
+        </div>
+        {/* spacer */}
+        <div className="h-16">{""}</div>
+        {/* user info */}
+        <div className="p-4 text-2xl font-bold">{`@${data.name}`}</div>
+        <div className="w-full border-b border-stone-400"></div>
+      </PageLayout>
     </>
   );
 };
