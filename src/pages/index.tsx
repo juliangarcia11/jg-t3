@@ -1,13 +1,17 @@
-import type { RouterOutputs } from "@/utils/api";
 import { api } from "@/utils/api";
 import { signIn, signOut, useSession } from "next-auth/react";
 import Image from "next/image";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
-import { PageLayout, LoadingSpinner, SiteLogo } from "@/components";
+import {
+  LoadingSpinner,
+  PageLayout,
+  PostView,
+  type PostWithUser,
+  SiteLogo,
+} from "@/components";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 dayjs.extend(relativeTime);
 
@@ -52,39 +56,6 @@ const Feed = () => {
     </div>
   );
 };
-
-type PostWithUser = RouterOutputs["posts"]["getAll"][number];
-const PostView = ({ id, content, creator, createdAt }: PostWithUser) => (
-  <div
-    key={id}
-    className="flex flex-row items-center gap-4 border-b border-b-stone-400 px-4 py-8"
-  >
-    {creator.image && (
-      <Image
-        className="h-10 w-10 rounded-full"
-        width={100}
-        height={100}
-        src={creator.image}
-        alt={`@${creator.name}'s profile image`}
-      />
-    )}
-    {!creator.image && <span className="h-6 w-6 rounded-full">👽</span>}
-    <div className={`flex flex-col gap-y-1`}>
-      <div className={`flex items-center gap-1 text-white/60`}>
-        <Link href={`/@${creator.name}`}>
-          <span className={`font-bold`}>{`@${creator.name}`}</span>
-        </Link>
-        {" • "}
-        <Link href={`/posts/${id}`}>
-          <span className={`text-xs font-thin`}>
-            {dayjs(createdAt).fromNow()}
-          </span>
-        </Link>
-      </div>
-      <span className={`ml-2 text-xl`}>{content}</span>
-    </div>
-  </div>
-);
 
 /**
  * Button to send the user through the Next Auth sign in & out process

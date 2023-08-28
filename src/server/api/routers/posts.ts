@@ -4,8 +4,8 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 import { filterUserForClient } from "@/server/helpers";
-import type { User } from "next-auth";
-import type { Post } from "@prisma/client";
+import type { Session, User } from "next-auth";
+import type { Post, PrismaClient } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
@@ -23,6 +23,27 @@ const ratelimit = new Ratelimit({
   prefix: "@upstash/ratelimit",
 });
 
+const addUserDataToPosts = async (
+  ctx: {
+    session: Session | null;
+    prisma: PrismaClient;
+  },
+  posts: Post[]
+) => {
+  // get users from DB & prepare them for client side xfer
+  const users = (
+    await ctx.prisma.user.findMany({
+      take: 100,
+      where: {
+        id: {
+          in: posts.map(({ creatorId }) => creatorId),
+        },
+      },
+    })
+  ).map(filterUserForClient);
+  // map users to posts provided
+  return posts.map((post) => mapPostUser(post, users));
+};
 const mapPostUser = (post: Post, users: User[]) => {
   const creator = users.find((user) => user.id === post.creatorId);
 
@@ -36,24 +57,28 @@ const mapPostUser = (post: Post, users: User[]) => {
 };
 
 export const postsRouter = createTRPCRouter({
-  getAll: publicProcedure.query(async ({ ctx }) => {
-    const posts = await ctx.prisma.post.findMany({
-      take: 100,
-      orderBy: { createdAt: "desc" },
-    });
-    const users = (
-      await ctx.prisma.user.findMany({
+  getAll: publicProcedure.query(({ ctx }) =>
+    ctx.prisma.post
+      .findMany({
         take: 100,
-        where: {
-          id: {
-            in: posts.map(({ creatorId }) => creatorId),
-          },
-        },
+        orderBy: { createdAt: "desc" },
       })
-    ).map(filterUserForClient);
+      .then((posts) => addUserDataToPosts(ctx, posts))
+  ),
 
-    return posts.map((post) => mapPostUser(post, users));
-  }),
+  getPostsByUserId: publicProcedure
+    .input(z.object({ creatorId: z.string().min(1) }))
+    .query(({ ctx, input }) =>
+      ctx.prisma.post
+        .findMany({
+          where: {
+            creatorId: input.creatorId,
+          },
+          take: 100,
+          orderBy: { createdAt: "desc" },
+        })
+        .then((posts) => addUserDataToPosts(ctx, posts))
+    ),
 
   create: protectedProcedure
     .input(

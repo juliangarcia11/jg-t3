@@ -12,7 +12,7 @@ import type {
   NextPage,
 } from "next";
 import { prisma } from "@/server/db";
-import { PageLayout } from "@/components";
+import { LoadingSpinner, PageLayout, PostView } from "@/components";
 import Image from "next/image";
 
 dayjs.extend(relativeTime);
@@ -81,8 +81,28 @@ const ProfilePage: NextPage<PageProps> = ({ name }: PageProps) => {
         {/* user info */}
         <div className="p-4 text-2xl font-bold">{`@${data.name}`}</div>
         <div className="w-full border-b border-stone-400"></div>
+        <div>
+          <ProfileFeed creatorId={data.id} />
+        </div>
       </PageLayout>
     </>
   );
 };
 export default ProfilePage;
+
+const ProfileFeed = ({ creatorId }: { creatorId: string }) => {
+  const { data, isLoading, isError } = api.posts.getPostsByUserId.useQuery({
+    creatorId,
+  });
+
+  if (isLoading)
+    return (
+      <div className="flex h-36 items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  if (isError) return "Something went wrong :(";
+  if (!data.length) return "This user has no posts!";
+
+  return data.map((post) => <PostView key={post.id} {...post} />);
+};
